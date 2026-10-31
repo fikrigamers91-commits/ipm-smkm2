@@ -7,6 +7,10 @@ import ShareButtons from "@/components/artikel/ShareButtons";
 import { createClient } from "@supabase/supabase-js";
 import { Clock, ArrowLeft } from "lucide-react";
 
+// Paksa rendering dinamis agar tidak memicu error kompilasi statis
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type Props = {
   params: Promise<{
     slug: string;
@@ -23,43 +27,50 @@ type ArtikelItem = {
   isi: string[];
 };
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Inisialisasi aman dengan fallback string agar build tidak crash saat env var kosong
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
+  return createClient(url, key);
+}
 
 // 1. Ambil Artikel Utama berdasarkan Slug
 async function getArtikelBySlug(slug: string): Promise<ArtikelItem | null> {
-  const { data, error } = await supabase
-    .from("muazine")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "terbit")
-    .maybeSingle();
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("muazine")
+      .select("*")
+      .eq("slug", slug)
+      .eq("status", "terbit")
+      .maybeSingle();
 
-  if (data && !error) {
-    const isiArray =
-      typeof data.isi === "string"
-        ? data.isi.split("\n\n")
-        : Array.isArray(data.isi)
-        ? data.isi
-        : [];
+    if (data && !error) {
+      const isiArray =
+        typeof data.isi === "string"
+          ? data.isi.split("\n\n")
+          : Array.isArray(data.isi)
+          ? data.isi
+          : [];
 
-    return {
-      slug: data.slug,
-      judul: data.judul,
-      penulis: data.penulis,
-      tanggal: data.created_at
-        ? new Date(data.created_at).toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })
-        : "Terbaru",
-      kategori: data.kategori || "Berita",
-      cover: data.gambar || "/muazine/default.jpg",
-      isi: isiArray,
-    };
+      return {
+        slug: data.slug,
+        judul: data.judul,
+        penulis: data.penulis,
+        tanggal: data.created_at
+          ? new Date(data.created_at).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })
+          : "Terbaru",
+        kategori: data.kategori || "Berita",
+        cover: data.gambar || "/muazine/default.jpg",
+        isi: isiArray,
+      };
+    }
+  } catch {
+    // Fallback otomatis ke data statis jika koneksi Supabase gagal
   }
 
   const foundStatic = staticArtikel.find((item) => item.slug === slug);
@@ -77,6 +88,7 @@ async function getArtikelBySlug(slug: string): Promise<ArtikelItem | null> {
 // 2. Ambil Daftar Muazine Lainnya Secara Otomatis dari Supabase
 async function getMuazineLainnya(currentSlug: string): Promise<ArtikelItem[]> {
   try {
+    const supabase = getSupabase();
     const { data } = await supabase
       .from("muazine")
       .select("*")
@@ -207,7 +219,6 @@ export default async function DetailMuazine({ params }: Props) {
                   );
                 }
 
-                // Gambar Inline (FIXED: Bebas Potong, Ukuran Proporsional)
                 if (item.startsWith("![")) {
                   const caption = item.match(/\[(.*?)\]/)?.[1] ?? "";
                   let src = item.match(/\((.*?)\|/)?.[1] ?? item.match(/\((.*?)\)/)?.[1] ?? "";
