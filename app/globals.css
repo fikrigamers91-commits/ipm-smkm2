@@ -1,0 +1,65 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+/* ========================================
+   TEMA IPM (Tailwind v4 Theme System)
+======================================== */
+@theme {
+  --font-sans: var(--font-manrope), sans-serif;
+  --font-heading: var(--font-sora), sans-serif;
+  --font-mono: var(--font-space-mono), monospace;
+
+  /* Color Palette System */
+  --color-ipm-emerald: #10b981;
+  --color-ipm-amber: #f59e0b;
+  --color-ipm-blue: #005bac;
+  --color-ipm-green: #00a651;
+  --color-ipm-yellow: #f4c430;
+}
+
+/* ========================================
+   BASE STYLES
+======================================== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+img {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Netlify Badge & Drawer Removal */
+[data-netlify-deploy-id],
+iframe[src*="netlify"],
+#netlify-modal,
+.netlify-drawer-button {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
